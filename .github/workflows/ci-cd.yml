@@ -13,29 +13,36 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Deploy to EC2 via SSH
+      - name: Install Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+
+      - name: Build Docker Image
+        run: docker build -t backend-app .
+
+      - name: Save Docker Image
+        run: docker save backend-app -o backend-app.tar
+
+      - name: Copy to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "backend-app.tar"
+          target: "/home/ubuntu/backend-app.tar"
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ubuntu # or ec2-user depending on AMI
+          username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/ubuntu
-            # remove old app
-            rm -rf backend || true
-            mkdir backend
-            cd backend
-
-            # Pull latest code from GitHub
-            git clone https://github.com/<AdityaPatil0708>/<sneaker-store-backend>.git .
-            git checkout main
-
-            # Build Docker image on EC2
-            docker build -t backend-app .
-
-            # Restart container
+            docker load -i backend-app.tar
             docker stop backend || true
             docker rm backend || true
             docker run -d --name backend -p 80:3000 \
               --env-file /home/ubuntu/.env backend-app
+
