@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Direct EC2 Deploy
+name: CI/CD Pipeline - Node.js Backend (No Docker)
 
 on:
   push:
@@ -10,39 +10,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Install Docker
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io
-
-      - name: Build Docker Image
-        run: docker build -t backend-app .
-
-      - name: Save Docker Image
-        run: docker save backend-app -o backend-app.tar
-
-      - name: Copy to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ubuntu
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "backend-app.tar"
-          target: "/home/ubuntu/backend-app.tar"
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ubuntu
+          username: ubuntu # or ec2-user depending on AMI
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker load -i backend-app.tar
-            docker stop backend || true
-            docker rm backend || true
-            docker run -d --name backend -p 80:3000 \
-              --env-file /home/ubuntu/.env backend-app
+            cd /home/ubuntu/app || mkdir -p /home/ubuntu/app && cd /home/ubuntu/app
 
+            # Get latest code from GitHub
+            if [ -d ".git" ]; then
+              git reset --hard
+              git pull origin main
+            else
+              git clone https://github.com/AdityaPatil0708/sneaker-store-backend.git .
+              git checkout main
+            fi
+
+            # Install dependencies
+            npm install --production
+
+            # Restart app with PM2
+            pm2 stop backend || true
+            pm2 delete backend || true
+            pm2 start server.js --name backend
+            pm2 save
