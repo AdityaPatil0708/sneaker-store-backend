@@ -17,7 +17,7 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ubuntu # or ec2-user depending on AMI
+          username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu/app || mkdir -p /home/ubuntu/app && cd /home/ubuntu/app
@@ -30,6 +30,13 @@ jobs:
               git clone https://github.com/AdityaPatil0708/sneaker-store-backend.git .
               git checkout main
             fi
+
+            # Create/overwrite .env file using GitHub Secrets
+            cat > .env <<EOL
+            MONGO_URI=${{ secrets.MONGO_URL }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            PORT=5000
+            EOL
 
             # Install dependencies
             npm install --production
