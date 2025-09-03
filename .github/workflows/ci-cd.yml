@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Node.js Backend (No Docker)
+name: CI/CD Pipeline - Backend (No Docker)
 
 on:
   push:
