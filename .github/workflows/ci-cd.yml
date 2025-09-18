@@ -22,7 +22,6 @@ jobs:
           script: |
             cd /home/ubuntu/app || mkdir -p /home/ubuntu/app && cd /home/ubuntu/app
 
-            # Get latest code from GitHub
             if [ -d ".git" ]; then
               git reset --hard
               git pull origin main
@@ -31,7 +30,7 @@ jobs:
               git checkout main
             fi
 
-            # Create/overwrite .env file using GitHub Secrets
+            
             cat > .env <<EOL
             MONGO_URI=${{ secrets.MONGO_URL }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
