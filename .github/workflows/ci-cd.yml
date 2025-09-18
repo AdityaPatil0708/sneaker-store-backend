@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Backend (No Docker)
+name: CI/CD Pipeline - Backend (Dockerized)
 
 on:
   push:
@@ -6,13 +6,29 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout repo
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Step 2: Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 3: Build and Push Docker Image
+      - name: Build and Push Docker image
+        run: |
+          IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/sneaker-backend
+          docker build -t $IMAGE_NAME:latest .
+          docker push $IMAGE_NAME:latest
+
+      # Step 4: Deploy on EC2 via SSH
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -20,28 +36,23 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/ubuntu/app || mkdir -p /home/ubuntu/app && cd /home/ubuntu/app
+            # Ensure Docker & PM2 are installed (one-time setup)
+            sudo apt-get update -y
+            sudo apt-get install -y docker.io
 
-            if [ -d ".git" ]; then
-              git reset --hard
-              git pull origin main
-            else
-              git clone https://github.com/AdityaPatil0708/sneaker-store-backend.git .
-              git checkout main
-            fi
+            # Pull latest Docker image
+            IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/sneaker-backend
+            sudo docker pull $IMAGE_NAME:latest
 
-            
-            cat > .env <<EOL
-            MONGO_URI=${{ secrets.MONGO_URL }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            PORT=5000
-            EOL
+            # Stop and remove old container if running
+            sudo docker stop sneaker-backend || true
+            sudo docker rm sneaker-backend || true
 
-            # Install dependencies
-            npm install --production
-
-            # Restart app with PM2
-            pm2 stop backend || true
-            pm2 delete backend || true
-            pm2 start server.js --name backend
-            pm2 save
+            # Run new container with environment variables
+            sudo docker run -d \
+              --name sneaker-backend \
+              -p 5000:3000 \
+              -e MONGO_URI=${{ secrets.MONGO_URL }} \
+              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+              -e PORT=3000 \
+              $IMAGE_NAME:latest
