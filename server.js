@@ -1,6 +1,6 @@
 
 const express = require('express');
-const dotenv=require('dotenv')
+const dotenv = require('dotenv')
 const cors = require('cors');
 const cookieParser = require('cookie-parser')
 require('dotenv').config();
@@ -10,14 +10,12 @@ const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
-dotenv.config({
-   path:"/.env" 
-})
+
 const mongoose = require("mongoose");
 
 mongoose.connect(process.env.MONGO_URL)
-.then(() => console.log("MongoDB connected"))
-.catch(err => console.log(err));
+   .then(() => console.log("MongoDB connected"))
+   .catch(err => console.log(err));
 
 const app = express();
 app.use(cors());
