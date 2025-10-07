@@ -25,7 +25,7 @@ const loginUser = async (req, res) => {
     if (user && (await user.matchPassword(password))) {
       const token = jwt.sign(
         { id: user._id },
-        process.env.JWT_SECRET || "1YIrX/5hYVA3JRXMdrmtMsI/c+DrU9ifeT0Mt5Wh2kc",
+        process.env.JWT_SECRET,
         { expiresIn: "30d" }
       );
       res.cookie("token", token, {
