@@ -13,14 +13,13 @@ const addToCart = async (req, res) => {
   try {
     const { productId, quantity } = req.body;
 
-    console.log("Received productId:", productId); // 🔍 Debug
+    console.log("Received productId:", productId);
     console.log("Quantity:", quantity);
 
     if (!productId) {
       return res.status(400).json({ message: "Product ID is required" });
     }
 
-    // Check if product exists
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ message: "Product not found in DB" });
@@ -51,8 +50,6 @@ const addToCart = async (req, res) => {
   }
 };
 
-
-// Remove item from cart
 const removeFromCart = async (req, res) => {
   const { productId } = req.body;
   const cart = await Cart.findOne({ user: req.user._id });

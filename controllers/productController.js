@@ -1,7 +1,4 @@
 const Product = require('../models/productmodel');
-
-
-
 // Get product by ID
 const getProductById = async (req, res) => {
   const product = await Product.findById(req.params.id);

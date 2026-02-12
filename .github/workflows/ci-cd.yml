@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Backend (Dockerized)
+name: CD Pipeline - Backend (Dockerized)
 
 on:
   push:
@@ -55,4 +55,4 @@ jobs:
               -e MONGO_URI=${{ secrets.MONGO_URL }} \
               -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
               -e PORT=3000 \
-              $IMAGE_NAME:latest
+              $IMAGE_NAME:latestþ
